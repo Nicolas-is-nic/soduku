@@ -1,6 +1,7 @@
 # CLAUDE.md
 
 - 开发过程中，如果需要执行git相关操作，请必须使用github这个mcp工具进行提交和推送操作，而不是使用bash执行常规的git命令
+- GitHub仓库信息: owner用户名为Nicolas-is-nic
 
 ## 项目概述
 
