@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数独游戏</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>数独游戏</h1>
+            <div class="game-controls">
+                <div class="difficulty-selector">
+                    <label for="difficulty">难度：</label>
+                    <select id="difficulty">
+                        <option value="easy">简单</option>
+                        <option value="medium" selected>中等</option>
+                        <option value="hard">困难</option>
+                    </select>
+                    <button id="new-game">新游戏</button>
+                </div>
+                <div class="game-info">
+                    <span>时间：<span id="timer">00:00</span></span>
+                    <span>步数：<span id="moves">0</span></span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-board-container">
+                <div class="sudoku-board" id="sudoku-board"></div>
+            </div>
+
+            <div class="game-controls-panel">
+                <div class="number-buttons">
+                    <h3>数字</h3>
+                    <div class="number-grid">
+                        <button class="number-btn" data-number="1">1</button>
+                        <button class="number-btn" data-number="2">2</button>
+                        <button class="number-btn" data-number="3">3</button>
+                        <button class="number-btn" data-number="4">4</button>
+                        <button class="number-btn" data-number="5">5</button>
+                        <button class="number-btn" data-number="6">6</button>
+                        <button class="number-btn" data-number="7">7</button>
+                        <button class="number-btn" data-number="8">8</button>
+                        <button class="number-btn" data-number="9">9</button>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <h3>操作</h3>
+                    <button id="clear-cell">清除</button>
+                    <button id="toggle-notes">候选数模式</button>
+                    <button id="fill-notes">填入全部候选数</button>
+                    <button id="undo">撤销</button>
+                    <button id="check-errors">检查错误</button>
+                    <button id="hint">提示</button>
+                </div>
+            </div>
+        </main>
+
+        <div class="modal" id="victory-modal">
+            <div class="modal-content">
+                <h2>恭喜你！</h2>
+                <p>你成功完成了数独游戏！</p>
+                <p>用时：<span id="final-time">00:00</span></p>
+                <p>步数：<span id="final-moves">0</span></p>
+                <button id="close-modal">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="data/puzzles.js"></script>
+</body>
+</html>
