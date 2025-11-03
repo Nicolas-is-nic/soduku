@@ -82,7 +82,7 @@ class SudokuGame {
 
     // 选择格子
     selectCell(row, col) {
-        if (this.board[row][col].isFixed || this.isGameComplete) {
+        if (this.isGameComplete) {
             return;
         }
 
@@ -215,6 +215,46 @@ class SudokuGame {
         this.onGameUpdate();
     }
 
+    // 填写唯一候选数
+    fillUniqueCandidates() {
+        if (this.isGameComplete) {
+            return;
+        }
+
+        this.saveHistory();
+
+        let filledCount = 0;
+
+        for (let row = 0; row < 9; row++) {
+            for (let col = 0; col < 9; col++) {
+                const cell = this.board[row][col];
+                if (cell.value === 0 && !cell.isFixed) {
+                    // 如果候选数为空，先计算候选数
+                    if (cell.notes.length === 0) {
+                        cell.notes = calculateCandidates(this.board, row, col);
+                    }
+
+                    // 如果只有一个候选数，则自动填入
+                    if (cell.notes.length === 1) {
+                        const uniqueValue = cell.notes[0];
+                        this.setCellValue(row, col, uniqueValue);
+                        filledCount++;
+                    }
+                }
+            }
+        }
+
+        if (filledCount > 0) {
+            this.moves++;
+            this.onGameUpdate();
+
+            // 如果有格子被填入，递归检查是否有新的唯一候选数
+            setTimeout(() => {
+                this.fillUniqueCandidates();
+            }, 100);
+        }
+    }
+
     // 切换候选数模式
     toggleNotesMode() {
         this.isNotesMode = !this.isNotesMode;
@@ -272,38 +312,7 @@ class SudokuGame {
         return hasErrors;
     }
 
-    // 获取提示
-    getHint() {
-        if (this.isGameComplete) {
-            return;
-        }
-
-        // 找到一个空格子并填入正确答案
-        const emptyCells = [];
-        for (let row = 0; row < 9; row++) {
-            for (let col = 0; col < 9; col++) {
-                if (this.board[row][col].value === 0) {
-                    emptyCells.push({ row, col });
-                }
-            }
-        }
-
-        if (emptyCells.length === 0) {
-            return;
-        }
-
-        const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        const { row, col } = randomCell;
-        const correctValue = this.solution[row][col];
-
-        this.saveHistory();
-        this.setCellValue(row, col, correctValue);
-        this.selectCell(row, col);
-        this.moves++;
-
-        this.onGameUpdate();
-    }
-
+    
     // 检查游戏是否完成
     checkCompletion() {
         // 检查所有格子是否都有值
@@ -425,6 +434,15 @@ class SudokuGame {
             this.startTime = gameState.startTime;
             this.isNotesMode = gameState.isNotesMode;
             this.isGameComplete = false;
+
+            // 清除所有候选数，确保新开始的游戏是干净的
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    if (!this.board[row][col].isFixed) {
+                        this.board[row][col].notes = [];
+                    }
+                }
+            }
 
             this.startTimer();
             this.onGameUpdate();

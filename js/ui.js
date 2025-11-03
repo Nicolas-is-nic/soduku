@@ -77,10 +77,6 @@ class SudokuUI {
             this.game.clearCell();
         });
 
-        document.getElementById('toggle-notes').addEventListener('click', () => {
-            this.game.toggleNotesMode();
-        });
-
         document.getElementById('fill-notes').addEventListener('click', () => {
             this.game.fillAllNotes();
         });
@@ -93,8 +89,8 @@ class SudokuUI {
             this.game.checkErrors();
         });
 
-        document.getElementById('hint').addEventListener('click', () => {
-            this.game.getHint();
+        document.getElementById('fill-unique-candidates').addEventListener('click', () => {
+            this.game.fillUniqueCandidates();
         });
 
         // 新游戏按钮
@@ -117,6 +113,17 @@ class SudokuUI {
         // 键盘事件
         document.addEventListener('keydown', (e) => {
             this.handleKeyPress(e);
+        });
+
+        // 键盘释放事件（主要用于处理空格键松开）
+        document.addEventListener('keyup', (e) => {
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (this.game.isNotesMode) {
+                    this.game.isNotesMode = false;
+                    this.updateButtons();
+                }
+            }
         });
 
         // 页面关闭前保存游戏
@@ -148,10 +155,13 @@ class SudokuUI {
             this.game.clearCell();
         }
 
-        // 空格键切换候选数模式
+        // 空格键按下时切换到候选数模式
         if (e.key === ' ') {
             e.preventDefault();
-            this.game.toggleNotesMode();
+            if (!this.game.isNotesMode) {
+                this.game.isNotesMode = true;
+                this.updateButtons();
+            }
         }
 
         // 方向键移动选中格子
@@ -237,9 +247,12 @@ class SudokuUI {
 
             noteElements.forEach((noteElement, index) => {
                 const noteValue = index + 1;
+
                 if (gameCell.notes.includes(noteValue)) {
                     noteElement.textContent = noteValue;
                     noteElement.style.display = 'flex';
+                    // 为调试添加位置信息（可选）
+                    // noteElement.title = `数字${noteValue}应该在位置：行${Math.floor((noteValue-1)/3)+1}, 列${((noteValue-1)%3)+1}`;
                 } else {
                     noteElement.textContent = '';
                     noteElement.style.display = 'none';
@@ -259,6 +272,11 @@ class SudokuUI {
         cells.forEach(cell => {
             cell.classList.remove('highlighted', 'highlighted-notes', 'highlight-related', 'highlight-related-rowcol');
             cell.style.backgroundColor = '';
+            // 清除候选数的高亮
+            const noteElements = cell.querySelectorAll('.note');
+            noteElements.forEach(noteElement => {
+                noteElement.classList.remove('highlighted');
+            });
         });
 
         const gameCell = this.game.board[row][col];
@@ -292,35 +310,26 @@ class SudokuUI {
                     cellElement.classList.add('highlighted');
                 }
             });
-        }
 
-        // 如果格子是空的，高亮包含相同候选数的格子和候选数
-        if (gameCell.value === 0 && gameCell.notes.length > 0) {
-            // 高亮包含相同候选数的格子
-            gameCell.notes.forEach(note => {
-                const cellsWithNote = this.game.getCellsWithNote(note);
-                cellsWithNote.forEach(({ row: r, col: c }) => {
-                    if (r !== row || c !== col) { // 不高亮当前格子本身
-                        const cellElement = this.getCellElement(r, c);
-                        if (cellElement) {
-                            cellElement.classList.remove('highlight-related', 'highlight-related-rowcol');
-                            cellElement.classList.add('highlighted-notes');
-                        }
+            // 同时高亮包含该数字作为候选数的格子和候选数
+            const cellsWithNote = this.game.getCellsWithNote(gameCell.value);
+            cellsWithNote.forEach(({ row: r, col: c }) => {
+                const cellElement = this.getCellElement(r, c);
+                if (cellElement) {
+                    cellElement.classList.remove('highlight-related', 'highlight-related-rowcol');
+                    cellElement.classList.add('highlighted-notes');
+                    // 高亮具体的候选数
+                    const noteElement = cellElement.querySelector(`.note[data-note="${gameCell.value}"]`);
+                    if (noteElement) {
+                        noteElement.classList.add('highlighted');
                     }
-                });
-
-                // 高亮具体的候选数
-                cellsWithNote.forEach(({ row: r, col: c }) => {
-                    const cellElement = this.getCellElement(r, c);
-                    if (cellElement) {
-                        const noteElement = cellElement.querySelector(`.note[data-note="${note}"]`);
-                        if (noteElement) {
-                            noteElement.classList.add('highlighted');
-                        }
-                    }
-                });
+                }
             });
         }
+
+        // 如果格子是空的且有候选数，不进行数字和候选数高亮，只保留行列宫高亮
+        // 这样用户可以清楚地看到当前格子的相关位置，而不会被其他信息干扰
+        // (移除了候选数高亮逻辑)
     }
 
     // 获取格子元素
@@ -341,28 +350,11 @@ class SudokuUI {
 
     // 更新按钮状态
     updateButtons() {
-        const notesBtn = document.getElementById('toggle-notes');
         const undoBtn = document.getElementById('undo');
-        const hintBtn = document.getElementById('hint');
-
-        // 更新候选数模式按钮
-        if (this.game.isNotesMode) {
-            notesBtn.textContent = '数字模式';
-            notesBtn.style.background = '#5a67d8';
-            notesBtn.style.color = 'white';
-        } else {
-            notesBtn.textContent = '候选数模式';
-            notesBtn.style.background = 'white';
-            notesBtn.style.color = '#4a5568';
-        }
 
         // 更新撤销按钮状态
         undoBtn.disabled = this.game.history.length === 0;
         undoBtn.style.opacity = undoBtn.disabled ? '0.5' : '1';
-
-        // 更新提示按钮状态
-        hintBtn.disabled = this.game.isGameComplete;
-        hintBtn.style.opacity = hintBtn.disabled ? '0.5' : '1';
     }
 
     // 显示胜利模态框
